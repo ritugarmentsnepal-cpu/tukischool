@@ -14,6 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'firebase_uid',
         'phone',
+        'email',
         'name',
         'language',
         'preferred_voice',
@@ -69,9 +70,9 @@ class User extends Authenticatable
         return $this->hasMany(CreditTransaction::class);
     }
 
-    public function chapterUnlocks()
+    public function syllabi()
     {
-        return $this->hasMany(UserChapterUnlock::class);
+        return $this->hasMany(Syllabus::class);
     }
 
     public function progress()

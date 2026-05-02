@@ -226,54 +226,147 @@
             <!-- Main Content -->
             <main class="flex-1 pt-16 pb-8 px-4">
                 <div class="max-w-4xl mx-auto">
-                    <!-- Welcome -->
-                    <div class="mb-8 mt-4">
-                        <h1 class="text-2xl font-bold">
-                            नमस्ते, <span class="text-brand-yellow" x-text="user?.name || 'Student'"></span> 👋
-                        </h1>
-                        <p class="text-gray-400 text-sm mt-1">Ready to learn today?</p>
-                    </div>
 
-                    <!-- Quick Stats -->
-                    <div class="grid grid-cols-3 gap-3 mb-8">
-                        <div class="glass rounded-xl p-4 text-center">
-                            <p class="text-brand-yellow font-mono font-bold text-2xl" x-text="user?.credits || 0"></p>
-                            <p class="text-gray-400 text-[10px] mt-1">Credits</p>
-                        </div>
-                        <div class="glass rounded-xl p-4 text-center">
-                            <p class="text-brand-light font-mono font-bold text-2xl">0</p>
-                            <p class="text-gray-400 text-[10px] mt-1">Chapters Done</p>
-                        </div>
-                        <div class="glass rounded-xl p-4 text-center">
-                            <p class="text-brand-light font-mono font-bold text-2xl">0h</p>
-                            <p class="text-gray-400 text-[10px] mt-1">Study Time</p>
-                        </div>
-                    </div>
+                    <!-- ═══ VIEW: Chapter List (default) ═══ -->
+                    <template x-if="!readerChapter">
+                        <div>
+                            <!-- Welcome -->
+                            <div class="mb-8 mt-4">
+                                <h1 class="text-2xl font-bold">
+                                    नमस्ते, <span class="text-brand-yellow" x-text="user?.name || 'Student'"></span> 👋
+                                </h1>
+                                <p class="text-gray-400 text-sm mt-1">Ready to learn today?</p>
+                            </div>
 
-                    <!-- Select Exam -->
-                    <div class="mb-8">
-                        <h2 class="font-bold text-lg mb-4">Choose Your Exam</h2>
-                        <div class="grid sm:grid-cols-2 gap-3">
-                            <template x-for="exam in exams" :key="exam.slug">
-                                <div class="glass rounded-xl p-4 cursor-pointer hover:border-brand-yellow/40 transition group" :class="user?.current_exam_id == exam.id ? 'border-brand-yellow/60 glow' : ''">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <h3 class="font-bold group-hover:text-brand-yellow transition" x-text="exam.name"></h3>
-                                            <p class="text-sm text-gray-400 font-nepali" x-text="exam.name_nepali"></p>
-                                        </div>
-                                        <span x-show="exam.is_featured" class="text-[10px] bg-brand-yellow/20 text-brand-yellow px-2 py-0.5 rounded-full">Popular</span>
-                                    </div>
+                            <!-- Quick Stats -->
+                            <div class="grid grid-cols-3 gap-3 mb-8">
+                                <div class="glass rounded-xl p-4 text-center">
+                                    <p class="text-brand-yellow font-mono font-bold text-2xl" x-text="user?.credits || 0"></p>
+                                    <p class="text-gray-400 text-[10px] mt-1">Credits</p>
                                 </div>
-                            </template>
-                        </div>
-                    </div>
+                                <div class="glass rounded-xl p-4 text-center">
+                                    <p class="text-brand-light font-mono font-bold text-2xl" x-text="chapters.filter(c => c.status === 'ready').length"></p>
+                                    <p class="text-gray-400 text-[10px] mt-1">Chapters Done</p>
+                                </div>
+                                <div class="glass rounded-xl p-4 text-center">
+                                    <p class="text-brand-light font-mono font-bold text-2xl" x-text="chapters.length"></p>
+                                    <p class="text-gray-400 text-[10px] mt-1">Total Chapters</p>
+                                </div>
+                            </div>
 
-                    <!-- Coming Soon placeholder -->
-                    <div class="glass rounded-2xl p-8 text-center">
-                        <p class="text-4xl mb-4">🚀</p>
-                        <h3 class="font-bold text-lg mb-2">Chapters Coming Soon</h3>
-                        <p class="text-gray-400 text-sm">Upload your syllabus or select a pre-loaded exam to start learning with your AI teacher.</p>
-                    </div>
+                            <!-- Select Exam -->
+                            <div class="mb-8">
+                                <h2 class="font-bold text-lg mb-4">Choose Your Exam</h2>
+                                <div class="grid sm:grid-cols-2 gap-3">
+                                    <template x-for="exam in exams" :key="exam.slug">
+                                        <div class="glass rounded-xl p-4 cursor-pointer hover:border-brand-yellow/40 transition group"
+                                             :class="selectedExamId == exam.id ? 'border-brand-yellow/60 glow' : ''"
+                                             @click="selectExam(exam)">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <h3 class="font-bold group-hover:text-brand-yellow transition" x-text="exam.name"></h3>
+                                                    <p class="text-sm text-gray-400 font-nepali" x-text="exam.name_nepali"></p>
+                                                </div>
+                                                <span x-show="exam.is_featured" class="text-[10px] bg-brand-yellow/20 text-brand-yellow px-2 py-0.5 rounded-full">Popular</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Chapters List -->
+                            <div x-show="chapters.length > 0" class="mb-8">
+                                <h2 class="font-bold text-lg mb-4">📚 Chapters</h2>
+                                <div class="space-y-3">
+                                    <template x-for="ch in chapters" :key="ch.id">
+                                        <div class="glass rounded-xl p-4 transition"
+                                             :class="ch.status === 'ready' ? 'cursor-pointer hover:border-brand-yellow/40' : ch.status === 'locked' ? 'cursor-pointer hover:border-gray-600' : ''"
+                                             @click="handleChapterClick(ch)">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"
+                                                         :class="ch.status === 'ready' ? 'bg-green-500/20 text-green-400' : ch.status === 'generating' ? 'bg-brand-yellow/20 text-brand-yellow' : 'bg-gray-700/50 text-gray-500'">
+                                                        <span x-show="ch.status === 'locked'">🔒</span>
+                                                        <span x-show="ch.status === 'generating'" class="animate-spin">⏳</span>
+                                                        <span x-show="ch.status === 'ready'">✅</span>
+                                                        <span x-show="ch.status === 'failed'">❌</span>
+                                                    </div>
+                                                    <div>
+                                                        <h3 class="font-semibold text-sm" x-text="ch.title"></h3>
+                                                        <p class="text-xs text-gray-400 font-nepali" x-text="ch.title_nepali"></p>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <template x-if="ch.status === 'locked'">
+                                                        <span class="text-xs bg-brand-yellow/10 text-brand-yellow px-2 py-1 rounded-full font-mono" x-text="ch.credits_to_unlock + ' credits'"></span>
+                                                    </template>
+                                                    <template x-if="ch.status === 'ready'">
+                                                        <span class="text-xs text-green-400">Read →</span>
+                                                    </template>
+                                                    <template x-if="ch.status === 'generating'">
+                                                        <span class="text-xs text-brand-yellow animate-pulse">Generating...</span>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- No chapters yet -->
+                            <div x-show="selectedExamId && chapters.length === 0 && !chaptersLoading" class="glass rounded-2xl p-8 text-center">
+                                <p class="text-4xl mb-4">📋</p>
+                                <h3 class="font-bold text-lg mb-2">No Chapters Yet</h3>
+                                <p class="text-gray-400 text-sm">No pre-loaded chapters available for this exam. Upload your own syllabus!</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ═══ VIEW: Reader (when a chapter is selected) ═══ -->
+                    <template x-if="readerChapter">
+                        <div>
+                            <!-- Back button -->
+                            <button @click="readerChapter = null; readerTab = 'textbook'" class="flex items-center gap-2 text-gray-400 hover:text-brand-yellow transition mt-4 mb-6 text-sm">
+                                ← Back to Chapters
+                            </button>
+
+                            <!-- Chapter header -->
+                            <div class="mb-6">
+                                <h1 class="text-xl font-bold" x-text="readerChapter.title"></h1>
+                                <p class="text-brand-yellow text-sm font-nepali mt-1" x-text="readerChapter.title_nepali"></p>
+                            </div>
+
+                            <!-- Tab toggle -->
+                            <div class="flex gap-2 mb-6">
+                                <button @click="readerTab = 'textbook'"
+                                        class="px-4 py-2 rounded-full text-sm font-semibold transition"
+                                        :class="readerTab === 'textbook' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
+                                    📖 Textbook
+                                </button>
+                                <button @click="readerTab = 'explanation'"
+                                        class="px-4 py-2 rounded-full text-sm font-semibold transition"
+                                        :class="readerTab === 'explanation' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
+                                    🗣️ Explanation
+                                </button>
+                            </div>
+
+                            <!-- Content -->
+                            <div class="glass rounded-2xl p-6">
+                                <div x-show="readerTab === 'textbook'" class="prose prose-invert prose-yellow max-w-none">
+                                    <div x-html="formatContent(readerContent?.textbook || 'Loading...')"></div>
+                                </div>
+                                <div x-show="readerTab === 'explanation'" class="prose prose-invert prose-yellow max-w-none">
+                                    <div x-html="formatContent(readerContent?.explanation || 'Loading...')"></div>
+                                </div>
+                            </div>
+
+                            <!-- Word count -->
+                            <div class="text-center mt-4">
+                                <span class="text-xs text-gray-500" x-text="(readerChapter.word_count || 0) + ' words'"></span>
+                            </div>
+                        </div>
+                    </template>
+
                 </div>
             </main>
         </div>
@@ -305,6 +398,15 @@
             isRegistering: false,
             loginLoading: false,
             exams: [],
+            // Chapter state
+            selectedExamId: null,
+            syllabusId: null,
+            chapters: [],
+            chaptersLoading: false,
+            // Reader state
+            readerChapter: null,
+            readerContent: null,
+            readerTab: 'textbook',
             features: [
                 { icon: '📖', title: 'AI Reads the Textbook', desc: 'Your AI teacher reads formal textbook content with word-by-word highlighting — exactly like reading in class.' },
                 { icon: '🗣️', title: 'Then Explains Simply', desc: 'After reading, the AI explains in colloquial Nepali — just like coaching teachers do. पढ्ने र बुझाउने!' },
@@ -320,6 +422,10 @@
 
             async init() {
                 await this.loadExams();
+                // Auto-select first exam if logged in
+                if (this.token && this.exams.length > 0) {
+                    this.selectExam(this.exams[0]);
+                }
             },
 
             async loadExams() {
@@ -328,6 +434,109 @@
                     const data = await res.json();
                     this.exams = data.exams || [];
                 } catch(e) { console.error('Failed to load exams', e); }
+            },
+
+            async selectExam(exam) {
+                this.selectedExamId = exam.id;
+                this.chaptersLoading = true;
+                this.chapters = [];
+                try {
+                    // Get syllabi for this exam
+                    const res = await fetch(API_URL + '/syllabi/' + exam.id, {
+                        headers: {
+                            'Authorization': 'Bearer ' + this.token,
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.syllabi && data.syllabi.length > 0) {
+                        this.syllabusId = data.syllabi[0].id;
+                        await this.loadChapters(this.syllabusId);
+                    }
+                } catch (e) { console.error('Failed to load syllabi', e); }
+                this.chaptersLoading = false;
+            },
+
+            async loadChapters(syllabusId) {
+                try {
+                    const res = await fetch(API_URL + '/chapters/' + syllabusId);
+                    const data = await res.json();
+                    this.chapters = data.chapters || [];
+                } catch (e) { console.error('Failed to load chapters', e); }
+            },
+
+            async handleChapterClick(ch) {
+                if (ch.status === 'ready') {
+                    await this.openReader(ch);
+                } else if (ch.status === 'locked') {
+                    await this.unlockChapter(ch);
+                }
+            },
+
+            async unlockChapter(ch) {
+                if (!confirm(`Unlock "${ch.title}" for ${ch.credits_to_unlock} credits?`)) return;
+                try {
+                    const res = await fetch(API_URL + '/chapters/' + ch.id + '/unlock', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + this.token,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.message || 'Failed to unlock chapter');
+                        return;
+                    }
+                    // Update user credits
+                    this.user.credits = data.credits_remaining;
+                    localStorage.setItem('tuki_user', JSON.stringify(this.user));
+                    // Refresh chapters
+                    await this.loadChapters(this.syllabusId);
+                    // Open reader if content is ready
+                    if (data.chapter.status === 'ready') {
+                        await this.openReader(data.chapter);
+                    }
+                } catch (e) {
+                    console.error('Failed to unlock chapter', e);
+                    alert('An error occurred while unlocking the chapter.');
+                }
+            },
+
+            async openReader(ch) {
+                this.readerChapter = ch;
+                this.readerTab = 'textbook';
+                try {
+                    const res = await fetch(API_URL + '/chapters/' + ch.id + '/content', {
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    const data = await res.json();
+                    this.readerContent = data.content || {};
+                } catch (e) {
+                    console.error('Failed to load content', e);
+                    this.readerContent = { textbook: 'Failed to load content.', explanation: '' };
+                }
+            },
+
+            formatContent(text) {
+                if (!text) return '';
+                // Convert markdown-like formatting to HTML
+                return text
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    .replace(/^### (.+)$/gm, '<h3 class="text-brand-yellow font-bold text-lg mt-6 mb-2">$1</h3>')
+                    .replace(/^## (.+)$/gm, '<h2 class="text-brand-yellow font-bold text-xl mt-8 mb-3">$1</h2>')
+                    .replace(/^# (.+)$/gm, '<h1 class="text-brand-yellow font-extrabold text-2xl mt-8 mb-4">$1</h1>')
+                    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-gray-300">$1</li>')
+                    .replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal text-gray-300">$1</li>')
+                    .replace(/\n\n/g, '</p><p class="mb-3 text-gray-300 leading-relaxed">')
+                    .replace(/\n/g, '<br>')
+                    ;
             },
 
             async emailLogin() {
@@ -362,6 +571,10 @@
                     this.showLogin = false;
                     this.loginEmail = '';
                     this.loginPassword = '';
+                    // Load chapters after login
+                    if (this.exams.length > 0) {
+                        this.selectExam(this.exams[0]);
+                    }
                 } catch (error) {
                     console.error('Error during email login', error);
                     alert(error.message);
@@ -385,6 +598,9 @@
                 localStorage.removeItem('tuki_user');
                 this.token = null;
                 this.user = null;
+                this.chapters = [];
+                this.selectedExamId = null;
+                this.readerChapter = null;
             }
         }
     }
