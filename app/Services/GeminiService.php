@@ -9,7 +9,7 @@ class GeminiService
 {
     private string $apiKey;
     private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    private string $model = 'gemini-2.0-flash';
+    private string $model = 'gemini-2.5-flash';
 
     public function __construct()
     {
@@ -95,6 +95,40 @@ Now EXPLAIN this chapter conversationally, exactly how a Nepali coaching teacher
 - Approximately 600-900 words
 
 Write the explanation now:
+PROMPT;
+
+        return $this->callGemini($prompt, false);
+    }
+
+    /**
+     * Answer a student's question about a chapter.
+     * Context-aware: receives the chapter content for grounded answers.
+     */
+    public function askQuestion(string $question, string $chapterTitle, string $textbookContent, string $examName): string
+    {
+        $prompt = <<<PROMPT
+You are "Tuki", a friendly AI tutor helping a Nepali student prepare for "{$examName}".
+
+The student is studying: "{$chapterTitle}"
+
+Here is the chapter content they are reading:
+---
+{$textbookContent}
+---
+
+The student asks: "{$question}"
+
+Answer their question:
+- Be helpful, clear, and encouraging
+- If the question is about the chapter content, give a precise answer grounded in the text above
+- If the question is slightly off-topic but related, still answer helpfully
+- Mix Nepali and English naturally, like a coaching teacher would
+- Use phrases like "राम्रो प्रश्न!", "हेर्नुहोस्", "exam मा यो आउँछ"
+- Keep answers concise (150-300 words) unless the question needs a longer explanation
+- Use bullet points for lists
+- If you don't know, say so honestly — don't make things up
+
+Answer now:
 PROMPT;
 
         return $this->callGemini($prompt, false);

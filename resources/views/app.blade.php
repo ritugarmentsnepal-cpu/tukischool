@@ -312,13 +312,71 @@
                                     </template>
                                 </div>
                             </div>
+                            <!-- Upload Syllabus Button -->
+                            <div x-show="selectedExamId" class="mb-8">
+                                <button @click="showUploadModal = true" class="w-full glass rounded-xl p-4 text-center cursor-pointer hover:border-brand-yellow/40 transition group border-dashed border-2 border-gray-700">
+                                    <span class="text-2xl">📤</span>
+                                    <p class="font-semibold text-sm mt-2 group-hover:text-brand-yellow transition">Upload Your Own Syllabus</p>
+                                    <p class="text-xs text-gray-500 mt-1">Paste your syllabus text and AI will parse it into chapters</p>
+                                </button>
+                            </div>
+
+                            <!-- Upload Syllabus Modal -->
+                            <template x-if="showUploadModal">
+                                <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" @click.self="showUploadModal = false">
+                                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-lg">
+                                        <h3 class="font-bold text-xl mb-1">📤 Upload Syllabus</h3>
+                                        <p class="text-gray-400 text-sm mb-4">Paste your syllabus content below. AI will parse it into chapters automatically.</p>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="text-xs text-gray-400 mb-1 block">Syllabus Title</label>
+                                                <input type="text" x-model="uploadTitle" placeholder="e.g. My Custom Syllabus" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-brand-light placeholder-gray-500 focus:border-brand-yellow focus:outline-none transition text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-400 mb-1 block">Syllabus Content</label>
+                                                <textarea x-model="uploadText" rows="8" placeholder="Paste your syllabus text here...&#10;&#10;Example:&#10;1. Constitution of Nepal&#10;2. Public Administration&#10;3. Economic Development..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-brand-light placeholder-gray-500 focus:border-brand-yellow focus:outline-none transition text-sm resize-none"></textarea>
+                                            </div>
+                                            <button @click="uploadSyllabus()" :disabled="uploadLoading || !uploadTitle || !uploadText" class="w-full bg-brand-yellow text-brand-dark font-bold py-3 rounded-lg hover:brightness-110 transition disabled:opacity-50">
+                                                <span x-show="!uploadLoading">Parse with AI ✨</span>
+                                                <span x-show="uploadLoading" class="flex items-center justify-center gap-2">
+                                                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                                    AI is parsing...
+                                                </span>
+                                            </button>
+                                        </div>
+                                        <button @click="showUploadModal = false" class="absolute top-3 right-3 text-gray-500 hover:text-gray-300 text-xl">&times;</button>
+                                    </div>
+                                </div>
+                            </template>
 
                             <!-- No chapters yet -->
                             <div x-show="selectedExamId && chapters.length === 0 && !chaptersLoading" class="glass rounded-2xl p-8 text-center">
                                 <p class="text-4xl mb-4">📋</p>
                                 <h3 class="font-bold text-lg mb-2">No Chapters Yet</h3>
-                                <p class="text-gray-400 text-sm">No pre-loaded chapters available for this exam. Upload your own syllabus!</p>
+                                <p class="text-gray-400 text-sm">Select an exam above to see pre-loaded chapters, or upload your own syllabus!</p>
                             </div>
+
+                            <!-- Unlock Confirmation Modal -->
+                            <template x-if="unlockChapterPending">
+                                <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" @click.self="unlockChapterPending = null">
+                                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
+                                        <p class="text-4xl mb-3">🔓</p>
+                                        <h3 class="font-bold text-lg mb-2">Unlock Chapter?</h3>
+                                        <p class="text-gray-400 text-sm mb-1" x-text="unlockChapterPending.title"></p>
+                                        <p class="text-brand-yellow font-mono font-bold text-xl mb-4" x-text="unlockChapterPending.credits_to_unlock + ' credits'"></p>
+                                        <div class="flex gap-3">
+                                            <button @click="unlockChapterPending = null" class="flex-1 glass py-3 rounded-lg font-semibold text-sm text-gray-400 hover:text-brand-light transition">Cancel</button>
+                                            <button @click="confirmUnlock()" :disabled="unlockLoading" class="flex-1 bg-brand-yellow text-brand-dark py-3 rounded-lg font-bold text-sm hover:brightness-110 transition disabled:opacity-50">
+                                                <span x-show="!unlockLoading">Unlock ✨</span>
+                                                <span x-show="unlockLoading" class="flex items-center justify-center gap-2">
+                                                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                                    Generating...
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </template>
 
@@ -336,22 +394,38 @@
                                 <p class="text-brand-yellow text-sm font-nepali mt-1" x-text="readerChapter.title_nepali"></p>
                             </div>
 
-                            <!-- Tab toggle -->
-                            <div class="flex gap-2 mb-6">
-                                <button @click="readerTab = 'textbook'"
-                                        class="px-4 py-2 rounded-full text-sm font-semibold transition"
-                                        :class="readerTab === 'textbook' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
-                                    📖 Textbook
-                                </button>
-                                <button @click="readerTab = 'explanation'"
-                                        class="px-4 py-2 rounded-full text-sm font-semibold transition"
-                                        :class="readerTab === 'explanation' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
-                                    🗣️ Explanation
-                                </button>
+                            <!-- Tab toggle + TTS controls -->
+                            <div class="flex items-center justify-between mb-6 flex-wrap gap-2">
+                                <div class="flex gap-2">
+                                    <button @click="readerTab = 'textbook'"
+                                            class="px-4 py-2 rounded-full text-sm font-semibold transition"
+                                            :class="readerTab === 'textbook' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
+                                        📖 Textbook
+                                    </button>
+                                    <button @click="readerTab = 'explanation'"
+                                            class="px-4 py-2 rounded-full text-sm font-semibold transition"
+                                            :class="readerTab === 'explanation' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
+                                        🗣️ Explanation
+                                    </button>
+                                </div>
+                                <!-- TTS Controls -->
+                                <div class="flex items-center gap-2">
+                                    <button @click="toggleTTS()" class="w-10 h-10 rounded-full flex items-center justify-center transition"
+                                            :class="ttsPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'glass text-brand-yellow hover:bg-brand-yellow/10'">
+                                        <span x-show="!ttsPlaying">🔊</span>
+                                        <span x-show="ttsPlaying">⏸️</span>
+                                    </button>
+                                    <select x-model="ttsSpeed" @change="updateTTSSpeed()" class="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none">
+                                        <option value="0.7">0.7x</option>
+                                        <option value="1">1x</option>
+                                        <option value="1.3">1.3x</option>
+                                        <option value="1.5">1.5x</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <!-- Content -->
-                            <div class="glass rounded-2xl p-6">
+                            <div class="glass rounded-2xl p-6 mb-4">
                                 <div x-show="readerTab === 'textbook'" class="prose prose-invert prose-yellow max-w-none">
                                     <div x-html="formatContent(readerContent?.textbook || 'Loading...')"></div>
                                 </div>
@@ -361,8 +435,69 @@
                             </div>
 
                             <!-- Word count -->
-                            <div class="text-center mt-4">
+                            <div class="text-center mb-6">
                                 <span class="text-xs text-gray-500" x-text="(readerChapter.word_count || 0) + ' words'"></span>
+                            </div>
+
+                            <!-- ═══ Q&A Chat Panel ═══ -->
+                            <div class="glass rounded-2xl overflow-hidden">
+                                <!-- Chat header -->
+                                <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between cursor-pointer" @click="chatOpen = !chatOpen">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-lg">💬</span>
+                                        <span class="font-bold text-sm">Ask Tuki AI</span>
+                                        <span class="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Live</span>
+                                    </div>
+                                    <span class="text-gray-500 text-sm" x-text="chatOpen ? '▼' : '▲'"></span>
+                                </div>
+
+                                <!-- Chat body -->
+                                <div x-show="chatOpen" x-transition class="flex flex-col" style="max-height: 400px;">
+                                    <!-- Messages -->
+                                    <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3" style="max-height: 300px;" x-ref="chatMessages">
+                                        <!-- Welcome message -->
+                                        <div x-show="chatMessages.length === 0" class="text-center py-6">
+                                            <p class="text-3xl mb-2">🦉</p>
+                                            <p class="text-gray-400 text-sm">म Tuki हुँ! यो chapter बारेमा कुनै प्रश्न सोध्नुहोस्।</p>
+                                            <p class="text-gray-500 text-xs mt-1">I'm Tuki! Ask me anything about this chapter.</p>
+                                        </div>
+
+                                        <template x-for="(msg, i) in chatMessages" :key="i">
+                                            <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                                                <div :class="msg.role === 'user' ? 'bg-brand-yellow/10 border-brand-yellow/20 text-brand-light' : 'bg-gray-800 border-gray-700 text-gray-300'"
+                                                     class="border rounded-xl px-4 py-2.5 max-w-[85%] text-sm">
+                                                    <div x-html="msg.role === 'assistant' ? formatContent(msg.text) : msg.text"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Typing indicator -->
+                                        <div x-show="chatLoading" class="flex justify-start">
+                                            <div class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-400">
+                                                <span class="flex items-center gap-1">
+                                                    <span class="w-2 h-2 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:0ms"></span>
+                                                    <span class="w-2 h-2 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:150ms"></span>
+                                                    <span class="w-2 h-2 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:300ms"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Input bar -->
+                                    <div class="border-t border-gray-800 px-3 py-3 flex items-center gap-2">
+                                        <button @click="toggleVoiceInput()" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition"
+                                                :class="voiceListening ? 'bg-red-500 text-white animate-pulse' : 'glass text-gray-400 hover:text-brand-yellow'">
+                                            🎤
+                                        </button>
+                                        <input type="text" x-model="chatInput" @keydown.enter="sendChatMessage()"
+                                               placeholder="Ask a question..." 
+                                               class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-brand-light placeholder-gray-500 focus:border-brand-yellow focus:outline-none transition">
+                                        <button @click="sendChatMessage()" :disabled="!chatInput.trim() || chatLoading" 
+                                                class="w-10 h-10 bg-brand-yellow rounded-full flex items-center justify-center shrink-0 hover:brightness-110 transition disabled:opacity-40">
+                                            <span class="text-brand-dark font-bold">→</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -407,6 +542,29 @@
             readerChapter: null,
             readerContent: null,
             readerTab: 'textbook',
+            // Upload state
+            showUploadModal: false,
+            uploadTitle: '',
+            uploadText: '',
+            uploadLoading: false,
+            // Unlock state
+            unlockChapterPending: null,
+            unlockLoading: false,
+            // Toast
+            toastMsg: '',
+            toastType: 'success',
+            // TTS state
+            ttsPlaying: false,
+            ttsSpeed: '1',
+            ttsUtterance: null,
+            // Chat state
+            chatOpen: true,
+            chatInput: '',
+            chatMessages: [],
+            chatLoading: false,
+            // Voice input
+            voiceListening: false,
+            voiceRecognition: null,
             features: [
                 { icon: '📖', title: 'AI Reads the Textbook', desc: 'Your AI teacher reads formal textbook content with word-by-word highlighting — exactly like reading in class.' },
                 { icon: '🗣️', title: 'Then Explains Simply', desc: 'After reading, the AI explains in colloquial Nepali — just like coaching teachers do. पढ्ने र बुझाउने!' },
@@ -434,6 +592,42 @@
                     const data = await res.json();
                     this.exams = data.exams || [];
                 } catch(e) { console.error('Failed to load exams', e); }
+            },
+
+            async uploadSyllabus() {
+                this.uploadLoading = true;
+                try {
+                    const res = await fetch(API_URL + '/syllabi/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + this.token,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            exam_id: this.selectedExamId,
+                            title: this.uploadTitle,
+                            raw_text: this.uploadText
+                        })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.message || 'Upload failed');
+                        return;
+                    }
+                    alert('Syllabus parsed! ' + data.chapter_count + ' chapters created.');
+                    this.showUploadModal = false;
+                    this.uploadTitle = '';
+                    this.uploadText = '';
+                    // Reload chapters
+                    await this.selectExam(this.exams.find(e => e.id === this.selectedExamId));
+                } catch (e) {
+                    console.error('Upload failed', e);
+                    alert('An error occurred while uploading.');
+                } finally {
+                    this.uploadLoading = false;
+                }
             },
 
             async selectExam(exam) {
@@ -470,12 +664,14 @@
                 if (ch.status === 'ready') {
                     await this.openReader(ch);
                 } else if (ch.status === 'locked') {
-                    await this.unlockChapter(ch);
+                    this.unlockChapterPending = ch;
                 }
             },
 
-            async unlockChapter(ch) {
-                if (!confirm(`Unlock "${ch.title}" for ${ch.credits_to_unlock} credits?`)) return;
+            async confirmUnlock() {
+                const ch = this.unlockChapterPending;
+                if (!ch) return;
+                this.unlockLoading = true;
                 try {
                     const res = await fetch(API_URL + '/chapters/' + ch.id + '/unlock', {
                         method: 'POST',
@@ -488,31 +684,42 @@
                     });
                     const data = await res.json();
                     if (!res.ok) {
-                        alert(data.message || 'Failed to unlock chapter');
+                        this.showToast(data.message || 'Failed to unlock chapter', 'error');
                         return;
                     }
-                    // Update user credits
                     this.user.credits = data.credits_remaining;
                     localStorage.setItem('tuki_user', JSON.stringify(this.user));
-                    // Refresh chapters
+                    this.unlockChapterPending = null;
                     await this.loadChapters(this.syllabusId);
-                    // Open reader if content is ready
                     if (data.chapter.status === 'ready') {
                         await this.openReader(data.chapter);
                     }
                 } catch (e) {
                     console.error('Failed to unlock chapter', e);
-                    alert('An error occurred while unlocking the chapter.');
+                    this.showToast('An error occurred while unlocking.', 'error');
+                } finally {
+                    this.unlockLoading = false;
                 }
+            },
+
+            showToast(msg, type = 'success') {
+                this.toastMsg = msg;
+                this.toastType = type;
+                setTimeout(() => { this.toastMsg = ''; }, 4000);
             },
 
             async openReader(ch) {
                 this.readerChapter = ch;
                 this.readerTab = 'textbook';
+                this.chatMessages = [];
+                this.chatInput = '';
+                this.stopTTS();
                 try {
                     const res = await fetch(API_URL + '/chapters/' + ch.id + '/content', {
                         headers: {
+                            'Authorization': 'Bearer ' + this.token,
                             'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
                     const data = await res.json();
@@ -521,6 +728,139 @@
                     console.error('Failed to load content', e);
                     this.readerContent = { textbook: 'Failed to load content.', explanation: '' };
                 }
+            },
+
+            // ── TTS (Text-to-Speech) ──
+
+            toggleTTS() {
+                if (this.ttsPlaying) {
+                    this.stopTTS();
+                } else {
+                    this.startTTS();
+                }
+            },
+
+            startTTS() {
+                const text = this.readerTab === 'textbook' 
+                    ? (this.readerContent?.textbook || '') 
+                    : (this.readerContent?.explanation || '');
+                if (!text) return;
+                
+                // Strip markdown
+                const clean = text.replace(/[#*_\-]/g, '').replace(/\n+/g, '. ');
+                
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(clean);
+                utterance.rate = parseFloat(this.ttsSpeed);
+                utterance.pitch = 1;
+                utterance.lang = 'en-US';
+                utterance.onend = () => { this.ttsPlaying = false; };
+                utterance.onerror = () => { this.ttsPlaying = false; };
+                this.ttsUtterance = utterance;
+                this.ttsPlaying = true;
+                window.speechSynthesis.speak(utterance);
+            },
+
+            stopTTS() {
+                window.speechSynthesis.cancel();
+                this.ttsPlaying = false;
+            },
+
+            updateTTSSpeed() {
+                if (this.ttsPlaying) {
+                    this.stopTTS();
+                    this.startTTS();
+                }
+            },
+
+            // ── Chat Q&A ──
+
+            async sendChatMessage() {
+                const q = this.chatInput.trim();
+                if (!q || this.chatLoading) return;
+                
+                this.chatMessages.push({ role: 'user', text: q });
+                this.chatInput = '';
+                this.chatLoading = true;
+                
+                this.$nextTick(() => {
+                    if (this.$refs.chatMessages) {
+                        this.$refs.chatMessages.scrollTop = this.$refs.chatMessages.scrollHeight;
+                    }
+                });
+
+                try {
+                    const res = await fetch(API_URL + '/chapters/' + this.readerChapter.id + '/ask', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + this.token,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ question: q })
+                    });
+                    const data = await res.json();
+                    this.chatMessages.push({ role: 'assistant', text: data.answer || data.message || 'Sorry, I could not answer that.' });
+                } catch (e) {
+                    console.error('Chat error', e);
+                    this.chatMessages.push({ role: 'assistant', text: 'An error occurred. Please try again.' });
+                } finally {
+                    this.chatLoading = false;
+                    this.$nextTick(() => {
+                        if (this.$refs.chatMessages) {
+                            this.$refs.chatMessages.scrollTop = this.$refs.chatMessages.scrollHeight;
+                        }
+                    });
+                }
+            },
+
+            // ── Voice Input (Speech Recognition) ──
+
+            toggleVoiceInput() {
+                if (this.voiceListening) {
+                    this.stopVoiceInput();
+                } else {
+                    this.startVoiceInput();
+                }
+            },
+
+            startVoiceInput() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    this.showToast('Voice input not supported in this browser. Try Chrome.', 'error');
+                    return;
+                }
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'ne-NP'; // Nepali, falls back to English
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                recognition.continuous = false;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    this.chatInput = transcript;
+                    this.voiceListening = false;
+                };
+                recognition.onerror = (e) => {
+                    console.error('Voice error', e);
+                    this.voiceListening = false;
+                    if (e.error === 'not-allowed') {
+                        this.showToast('Microphone access denied. Please allow mic access.', 'error');
+                    }
+                };
+                recognition.onend = () => { this.voiceListening = false; };
+
+                this.voiceRecognition = recognition;
+                this.voiceListening = true;
+                recognition.start();
+            },
+
+            stopVoiceInput() {
+                if (this.voiceRecognition) {
+                    this.voiceRecognition.stop();
+                }
+                this.voiceListening = false;
             },
 
             formatContent(text) {

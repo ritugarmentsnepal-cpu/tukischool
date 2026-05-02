@@ -165,6 +165,50 @@ class ChapterController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/chapters/{id}/ask
+     *
+     * Ask a question about a chapter. Gemini answers with chapter context.
+     */
+    public function ask(Request $request, int $id)
+    {
+        $request->validate([
+            'question' => 'required|string|min:2|max:1000',
+        ]);
+
+        $chapter = Chapter::with('exam')->findOrFail($id);
+
+        if (!$chapter->hasContent()) {
+            return response()->json([
+                'error' => 'no_content',
+                'message' => 'This chapter has no content yet. Unlock it first.',
+            ], 403);
+        }
+
+        try {
+            $answer = $this->geminiService->askQuestion(
+                $request->question,
+                $chapter->title,
+                $chapter->textbook_content,
+                $chapter->exam->name ?? 'Exam'
+            );
+
+            return response()->json([
+                'answer' => $answer,
+                'chapter_id' => $chapter->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Q&A generation failed', [
+                'chapter_id' => $chapter->id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'error' => 'generation_failed',
+                'message' => 'Failed to generate answer. Please try again.',
+            ], 500);
+        }
+    }
+
     private function formatChapter(Chapter $chapter): array
     {
         return [

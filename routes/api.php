@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Chapters
     Route::post('/chapters/{id}/unlock', [ChapterController::class, 'unlock']);
     Route::get('/chapters/{id}/content', [ChapterController::class, 'content']);
+    Route::post('/chapters/{id}/ask', [ChapterController::class, 'ask']);
 
     // Credits (Sprint 8)
     // Route::get('/credits/balance', [CreditController::class, 'balance']);
