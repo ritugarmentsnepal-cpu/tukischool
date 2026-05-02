@@ -35,14 +35,31 @@
     </script>
     <style>
         [x-cloak] { display: none !important; }
-        body { font-size: 14px; line-height: 1.6; }
-        .glass { background: rgba(250,204,21,0.06); backdrop-filter: blur(16px); border: 1px solid rgba(250,204,21,0.12); }
+        body { font-size: 14px; line-height: 1.7; }
+        .glass { background: rgba(250,204,21,0.04); backdrop-filter: blur(20px); border: 1px solid rgba(250,204,21,0.10); border-radius: 16px; }
+        .glass-hover:hover { background: rgba(250,204,21,0.08); border-color: rgba(250,204,21,0.25); }
         .glow { box-shadow: 0 0 30px rgba(250,204,21,0.15); }
+        .glow-sm { box-shadow: 0 0 15px rgba(250,204,21,0.10); }
         @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
         @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 20px rgba(250,204,21,0.2); } 50% { box-shadow: 0 0 40px rgba(250,204,21,0.4); } }
+        @keyframes slideUp { from { opacity:0; transform:translateY(100%); } to { opacity:1; transform:translateY(0); } }
         .animate-fade-up { animation: fadeUp 0.6s ease-out forwards; }
         .animate-glow { animation: pulse-glow 3s ease-in-out infinite; }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
         .credit-pop { animation: fadeUp 0.4s ease-out; }
+        /* Content typography */
+        .reader-content { font-size: 15px; line-height: 1.9; letter-spacing: 0.01em; color: #d1d5db; }
+        .reader-content strong { color: #FACC15; }
+        .reader-content h1,.reader-content h2,.reader-content h3 { color: #fafafa; margin-top: 1.5em; }
+        /* Custom scrollbar */
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(250,204,21,0.2); border-radius: 4px; }
+        /* Skeleton loading */
+        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        /* Toast */
+        .toast-enter { animation: slideUp 0.3s ease-out; }
     </style>
 </head>
 <body class="bg-brand-dark text-brand-light min-h-screen font-sans antialiased" x-data="app()" x-cloak>
@@ -231,80 +248,102 @@
                     <template x-if="!readerChapter">
                         <div>
                             <!-- Welcome -->
-                            <div class="mb-8 mt-4">
+                            <div class="mb-8 mt-6">
                                 <h1 class="text-2xl font-bold">
                                     नमस्ते, <span class="text-brand-yellow" x-text="user?.name || 'Student'"></span> 👋
                                 </h1>
-                                <p class="text-gray-400 text-sm mt-1">Ready to learn today?</p>
+                                <p class="text-gray-500 text-sm mt-1">Ready to learn today?</p>
                             </div>
 
                             <!-- Quick Stats -->
-                            <div class="grid grid-cols-3 gap-3 mb-8">
-                                <div class="glass rounded-xl p-4 text-center">
-                                    <p class="text-brand-yellow font-mono font-bold text-2xl" x-text="user?.credits || 0"></p>
-                                    <p class="text-gray-400 text-[10px] mt-1">Credits</p>
+                            <div class="grid grid-cols-3 gap-3 mb-10">
+                                <div class="glass rounded-2xl p-5 text-center relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent"></div>
+                                    <p class="text-brand-yellow font-mono font-extrabold text-3xl relative" x-text="user?.credits || 0"></p>
+                                    <p class="text-gray-500 text-xs mt-1.5 relative">💰 Credits</p>
                                 </div>
-                                <div class="glass rounded-xl p-4 text-center">
-                                    <p class="text-brand-light font-mono font-bold text-2xl" x-text="chapters.filter(c => c.status === 'ready').length"></p>
-                                    <p class="text-gray-400 text-[10px] mt-1">Chapters Done</p>
+                                <div class="glass rounded-2xl p-5 text-center relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent"></div>
+                                    <p class="text-green-400 font-mono font-extrabold text-3xl relative" x-text="chapters.filter(c => c.status === 'ready').length"></p>
+                                    <p class="text-gray-500 text-xs mt-1.5 relative">✅ Completed</p>
                                 </div>
-                                <div class="glass rounded-xl p-4 text-center">
-                                    <p class="text-brand-light font-mono font-bold text-2xl" x-text="chapters.length"></p>
-                                    <p class="text-gray-400 text-[10px] mt-1">Total Chapters</p>
+                                <div class="glass rounded-2xl p-5 text-center relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent"></div>
+                                    <p class="text-blue-400 font-mono font-extrabold text-3xl relative" x-text="chapters.length"></p>
+                                    <p class="text-gray-500 text-xs mt-1.5 relative">📚 Total</p>
                                 </div>
                             </div>
 
                             <!-- Select Exam -->
-                            <div class="mb-8">
+                            <div class="mb-10">
                                 <h2 class="font-bold text-lg mb-4">Choose Your Exam</h2>
                                 <div class="grid sm:grid-cols-2 gap-3">
                                     <template x-for="exam in exams" :key="exam.slug">
-                                        <div class="glass rounded-xl p-4 cursor-pointer hover:border-brand-yellow/40 transition group"
-                                             :class="selectedExamId == exam.id ? 'border-brand-yellow/60 glow' : ''"
+                                        <div class="glass glass-hover rounded-2xl p-4 cursor-pointer transition-all duration-200 group"
+                                             :class="selectedExamId == exam.id ? 'border-brand-yellow/50 glow-sm bg-brand-yellow/5' : ''"
                                              @click="selectExam(exam)">
                                             <div class="flex items-center justify-between">
                                                 <div>
-                                                    <h3 class="font-bold group-hover:text-brand-yellow transition" x-text="exam.name"></h3>
-                                                    <p class="text-sm text-gray-400 font-nepali" x-text="exam.name_nepali"></p>
+                                                    <h3 class="font-bold text-sm group-hover:text-brand-yellow transition" x-text="exam.name"></h3>
+                                                    <p class="text-xs text-gray-500 font-nepali mt-0.5" x-text="exam.name_nepali"></p>
                                                 </div>
-                                                <span x-show="exam.is_featured" class="text-[10px] bg-brand-yellow/20 text-brand-yellow px-2 py-0.5 rounded-full">Popular</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span x-show="exam.is_featured" class="text-[10px] bg-brand-yellow/15 text-brand-yellow px-2.5 py-1 rounded-full font-semibold">Popular</span>
+                                                    <span x-show="selectedExamId == exam.id" class="w-2 h-2 bg-brand-yellow rounded-full"></span>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
                                 </div>
                             </div>
 
+                            <!-- Loading Skeleton -->
+                            <div x-show="chaptersLoading" class="space-y-3 mb-8">
+                                <div class="skeleton h-16 w-full"></div>
+                                <div class="skeleton h-16 w-full"></div>
+                                <div class="skeleton h-16 w-full"></div>
+                            </div>
+
                             <!-- Chapters List -->
-                            <div x-show="chapters.length > 0" class="mb-8">
-                                <h2 class="font-bold text-lg mb-4">📚 Chapters</h2>
-                                <div class="space-y-3">
-                                    <template x-for="ch in chapters" :key="ch.id">
-                                        <div class="glass rounded-xl p-4 transition"
-                                             :class="ch.status === 'ready' ? 'cursor-pointer hover:border-brand-yellow/40' : ch.status === 'locked' ? 'cursor-pointer hover:border-gray-600' : ''"
+                            <div x-show="chapters.length > 0 && !chaptersLoading" class="mb-8">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h2 class="font-bold text-lg">📚 Chapters</h2>
+                                    <span class="text-xs text-gray-500" x-text="chapters.filter(c => c.status === 'ready').length + '/' + chapters.length + ' completed'"></span>
+                                </div>
+                                <!-- Progress bar -->
+                                <div class="w-full h-1.5 bg-gray-800 rounded-full mb-5 overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-brand-yellow to-yellow-300 rounded-full transition-all duration-500"
+                                         :style="'width:' + (chapters.length ? (chapters.filter(c => c.status === 'ready').length / chapters.length * 100) : 0) + '%'"></div>
+                                </div>
+                                <div class="space-y-2.5">
+                                    <template x-for="(ch, idx) in chapters" :key="ch.id">
+                                        <div class="glass glass-hover rounded-2xl p-4 transition-all duration-200"
+                                             :class="ch.status === 'ready' ? 'cursor-pointer' : ch.status === 'locked' ? 'cursor-pointer' : ''"
                                              @click="handleChapterClick(ch)">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"
-                                                         :class="ch.status === 'ready' ? 'bg-green-500/20 text-green-400' : ch.status === 'generating' ? 'bg-brand-yellow/20 text-brand-yellow' : 'bg-gray-700/50 text-gray-500'">
-                                                        <span x-show="ch.status === 'locked'">🔒</span>
-                                                        <span x-show="ch.status === 'generating'" class="animate-spin">⏳</span>
-                                                        <span x-show="ch.status === 'ready'">✅</span>
-                                                        <span x-show="ch.status === 'failed'">❌</span>
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                    <!-- Chapter number -->
+                                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
+                                                         :class="ch.status === 'ready' ? 'bg-green-500/15 text-green-400 border border-green-500/20' : ch.status === 'generating' ? 'bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/20' : 'bg-gray-800 text-gray-500 border border-gray-700'">
+                                                        <span x-show="ch.status === 'locked'" x-text="idx + 1"></span>
+                                                        <span x-show="ch.status === 'generating'" class="animate-spin text-base">⏳</span>
+                                                        <span x-show="ch.status === 'ready'" class="text-base">✓</span>
+                                                        <span x-show="ch.status === 'failed'">✗</span>
                                                     </div>
-                                                    <div>
-                                                        <h3 class="font-semibold text-sm" x-text="ch.title"></h3>
-                                                        <p class="text-xs text-gray-400 font-nepali" x-text="ch.title_nepali"></p>
+                                                    <div class="min-w-0">
+                                                        <h3 class="font-semibold text-sm truncate" x-text="ch.title"></h3>
+                                                        <p class="text-xs text-gray-500 font-nepali truncate" x-text="ch.title_nepali"></p>
                                                     </div>
                                                 </div>
-                                                <div class="text-right">
+                                                <div class="shrink-0">
                                                     <template x-if="ch.status === 'locked'">
-                                                        <span class="text-xs bg-brand-yellow/10 text-brand-yellow px-2 py-1 rounded-full font-mono" x-text="ch.credits_to_unlock + ' credits'"></span>
+                                                        <span class="text-[11px] bg-gray-800 text-gray-400 px-3 py-1.5 rounded-full font-mono border border-gray-700">🔒 <span x-text="ch.credits_to_unlock"></span></span>
                                                     </template>
                                                     <template x-if="ch.status === 'ready'">
-                                                        <span class="text-xs text-green-400">Read →</span>
+                                                        <span class="text-[11px] bg-green-500/10 text-green-400 px-3 py-1.5 rounded-full font-semibold border border-green-500/20">Read →</span>
                                                     </template>
                                                     <template x-if="ch.status === 'generating'">
-                                                        <span class="text-xs text-brand-yellow animate-pulse">Generating...</span>
+                                                        <span class="text-[11px] text-brand-yellow animate-pulse font-mono">Generating...</span>
                                                     </template>
                                                 </div>
                                             </div>
@@ -383,118 +422,138 @@
                     <!-- ═══ VIEW: Reader (when a chapter is selected) ═══ -->
                     <template x-if="readerChapter">
                         <div>
-                            <!-- Back button -->
-                            <button @click="readerChapter = null; readerTab = 'textbook'" class="flex items-center gap-2 text-gray-400 hover:text-brand-yellow transition mt-4 mb-6 text-sm">
-                                ← Back to Chapters
-                            </button>
-
-                            <!-- Chapter header -->
-                            <div class="mb-6">
-                                <h1 class="text-xl font-bold" x-text="readerChapter.title"></h1>
-                                <p class="text-brand-yellow text-sm font-nepali mt-1" x-text="readerChapter.title_nepali"></p>
-                            </div>
-
-                            <!-- Tab toggle + TTS controls -->
-                            <div class="flex items-center justify-between mb-6 flex-wrap gap-2">
-                                <div class="flex gap-2">
-                                    <button @click="readerTab = 'textbook'"
-                                            class="px-4 py-2 rounded-full text-sm font-semibold transition"
-                                            :class="readerTab === 'textbook' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
+                            <!-- Sticky reader toolbar -->
+                            <div class="sticky top-16 z-40 bg-brand-dark/95 backdrop-blur-md pt-4 pb-3 -mx-4 px-4 border-b border-gray-800/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <button @click="readerChapter = null; stopTTS(); readerTab = 'textbook'" class="flex items-center gap-2 text-gray-400 hover:text-brand-yellow transition text-sm font-medium">
+                                        <span class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center text-xs border border-gray-700">←</span>
+                                        Back
+                                    </button>
+                                    <!-- TTS Controls -->
+                                    <div class="flex items-center gap-2">
+                                        <button @click="toggleTTS()" class="h-8 px-3 rounded-full flex items-center justify-center gap-1.5 text-xs font-medium transition"
+                                                :class="ttsPlaying ? 'bg-red-500/15 text-red-400 border border-red-500/20' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-brand-yellow hover:border-brand-yellow/30'">
+                                            <span x-text="ttsPlaying ? '⏸ Stop' : '🔊 Listen'"></span>
+                                        </button>
+                                        <select x-model="ttsSpeed" @change="updateTTSSpeed()" class="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none h-8">
+                                            <option value="0.7">0.7×</option>
+                                            <option value="1">1×</option>
+                                            <option value="1.3">1.3×</option>
+                                            <option value="1.5">1.5×</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Title + tabs -->
+                                <div class="mb-1">
+                                    <h1 class="text-lg font-bold leading-tight" x-text="readerChapter.title"></h1>
+                                    <p class="text-brand-yellow/80 text-xs font-nepali mt-0.5" x-text="readerChapter.title_nepali"></p>
+                                </div>
+                                <div class="flex gap-1.5 mt-3">
+                                    <button @click="readerTab = 'textbook'; stopTTS()"
+                                            class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
+                                            :class="readerTab === 'textbook' ? 'bg-brand-yellow text-brand-dark' : 'bg-gray-800 text-gray-500 hover:text-brand-light border border-gray-700'">
                                         📖 Textbook
                                     </button>
-                                    <button @click="readerTab = 'explanation'"
-                                            class="px-4 py-2 rounded-full text-sm font-semibold transition"
-                                            :class="readerTab === 'explanation' ? 'bg-brand-yellow text-brand-dark' : 'glass text-gray-400 hover:text-brand-light'">
-                                        🗣️ Explanation
+                                    <button @click="readerTab = 'explanation'; stopTTS()"
+                                            class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
+                                            :class="readerTab === 'explanation' ? 'bg-brand-yellow text-brand-dark' : 'bg-gray-800 text-gray-500 hover:text-brand-light border border-gray-700'">
+                                        🗣️ बुझाउने
                                     </button>
-                                </div>
-                                <!-- TTS Controls -->
-                                <div class="flex items-center gap-2">
-                                    <button @click="toggleTTS()" class="w-10 h-10 rounded-full flex items-center justify-center transition"
-                                            :class="ttsPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'glass text-brand-yellow hover:bg-brand-yellow/10'">
-                                        <span x-show="!ttsPlaying">🔊</span>
-                                        <span x-show="ttsPlaying">⏸️</span>
-                                    </button>
-                                    <select x-model="ttsSpeed" @change="updateTTSSpeed()" class="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none">
-                                        <option value="0.7">0.7x</option>
-                                        <option value="1">1x</option>
-                                        <option value="1.3">1.3x</option>
-                                        <option value="1.5">1.5x</option>
-                                    </select>
                                 </div>
                             </div>
 
                             <!-- Content -->
-                            <div class="glass rounded-2xl p-6 mb-4">
-                                <div x-show="readerTab === 'textbook'" class="prose prose-invert prose-yellow max-w-none">
-                                    <div x-html="formatContent(readerContent?.textbook || 'Loading...')"></div>
+                            <div class="glass rounded-2xl p-5 sm:p-8 mt-4 mb-4">
+                                <div x-show="readerTab === 'textbook'" class="reader-content">
+                                    <div x-html="formatContent(readerContent?.textbook || '')"></div>
+                                    <div x-show="!readerContent?.textbook" class="space-y-3">
+                                        <div class="skeleton h-4 w-full"></div>
+                                        <div class="skeleton h-4 w-5/6"></div>
+                                        <div class="skeleton h-4 w-4/6"></div>
+                                        <div class="skeleton h-4 w-full"></div>
+                                        <div class="skeleton h-4 w-3/4"></div>
+                                    </div>
                                 </div>
-                                <div x-show="readerTab === 'explanation'" class="prose prose-invert prose-yellow max-w-none">
-                                    <div x-html="formatContent(readerContent?.explanation || 'Loading...')"></div>
+                                <div x-show="readerTab === 'explanation'" class="reader-content">
+                                    <div x-html="formatContent(readerContent?.explanation || '')"></div>
+                                    <div x-show="!readerContent?.explanation" class="space-y-3">
+                                        <div class="skeleton h-4 w-full"></div>
+                                        <div class="skeleton h-4 w-5/6"></div>
+                                        <div class="skeleton h-4 w-4/6"></div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Word count -->
                             <div class="text-center mb-6">
-                                <span class="text-xs text-gray-500" x-text="(readerChapter.word_count || 0) + ' words'"></span>
+                                <span class="text-[10px] text-gray-600 font-mono" x-text="(readerChapter.word_count || 0) + ' words'"></span>
                             </div>
 
                             <!-- ═══ Q&A Chat Panel ═══ -->
-                            <div class="glass rounded-2xl overflow-hidden">
+                            <div class="glass rounded-2xl overflow-hidden mb-8 border border-gray-800">
                                 <!-- Chat header -->
-                                <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between cursor-pointer" @click="chatOpen = !chatOpen">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-lg">💬</span>
-                                        <span class="font-bold text-sm">Ask Tuki AI</span>
-                                        <span class="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Live</span>
+                                <div class="px-4 py-3 flex items-center justify-between cursor-pointer bg-gray-900/50" @click="chatOpen = !chatOpen">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 bg-brand-yellow/10 rounded-full flex items-center justify-center">
+                                            <span class="text-sm">🦉</span>
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-sm">Ask Tuki</span>
+                                            <span class="text-[10px] bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full ml-2 font-medium">Online</span>
+                                        </div>
                                     </div>
-                                    <span class="text-gray-500 text-sm" x-text="chatOpen ? '▼' : '▲'"></span>
+                                    <span class="text-gray-600 text-xs transition-transform duration-200" :class="chatOpen ? 'rotate-180' : ''">▼</span>
                                 </div>
 
                                 <!-- Chat body -->
-                                <div x-show="chatOpen" x-transition class="flex flex-col" style="max-height: 400px;">
+                                <div x-show="chatOpen" x-transition.duration.200ms>
                                     <!-- Messages -->
-                                    <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3" style="max-height: 300px;" x-ref="chatMessages">
-                                        <!-- Welcome message -->
-                                        <div x-show="chatMessages.length === 0" class="text-center py-6">
-                                            <p class="text-3xl mb-2">🦉</p>
-                                            <p class="text-gray-400 text-sm">म Tuki हुँ! यो chapter बारेमा कुनै प्रश्न सोध्नुहोस्।</p>
-                                            <p class="text-gray-500 text-xs mt-1">I'm Tuki! Ask me anything about this chapter.</p>
+                                    <div class="overflow-y-auto px-4 py-4 space-y-3 chat-scroll" style="max-height: 350px; min-height: 120px;" x-ref="chatMessages">
+                                        <!-- Welcome -->
+                                        <div x-show="chatMessages.length === 0" class="text-center py-8">
+                                            <p class="text-4xl mb-3">🦉</p>
+                                            <p class="text-gray-400 text-sm font-nepali">म Tuki हुँ! यो chapter बारेमा सोध्नुहोस्</p>
+                                            <p class="text-gray-600 text-xs mt-1">Ask me anything about this chapter</p>
+                                            <div class="flex flex-wrap justify-center gap-2 mt-4">
+                                                <button @click="chatInput = 'Summarize this chapter'; sendChatMessage()" class="text-[11px] bg-gray-800 text-gray-400 px-3 py-1.5 rounded-full border border-gray-700 hover:border-brand-yellow/30 hover:text-brand-yellow transition">📝 Summarize</button>
+                                                <button @click="chatInput = 'What are the key points?'; sendChatMessage()" class="text-[11px] bg-gray-800 text-gray-400 px-3 py-1.5 rounded-full border border-gray-700 hover:border-brand-yellow/30 hover:text-brand-yellow transition">🔑 Key Points</button>
+                                                <button @click="chatInput = 'Give me exam tips'; sendChatMessage()" class="text-[11px] bg-gray-800 text-gray-400 px-3 py-1.5 rounded-full border border-gray-700 hover:border-brand-yellow/30 hover:text-brand-yellow transition">🎯 Exam Tips</button>
+                                            </div>
                                         </div>
 
                                         <template x-for="(msg, i) in chatMessages" :key="i">
-                                            <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                                                <div :class="msg.role === 'user' ? 'bg-brand-yellow/10 border-brand-yellow/20 text-brand-light' : 'bg-gray-800 border-gray-700 text-gray-300'"
-                                                     class="border rounded-xl px-4 py-2.5 max-w-[85%] text-sm">
-                                                    <div x-html="msg.role === 'assistant' ? formatContent(msg.text) : msg.text"></div>
+                                            <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'" class="animate-fade-up">
+                                                <div :class="msg.role === 'user' ? 'bg-brand-yellow/8 border-brand-yellow/15 ml-8' : 'bg-gray-800/80 border-gray-700 mr-8'"
+                                                     class="border rounded-2xl px-4 py-3 text-sm leading-relaxed">
+                                                    <div x-html="msg.role === 'assistant' ? formatContent(msg.text) : msg.text" class="text-gray-300"></div>
                                                 </div>
                                             </div>
                                         </template>
 
                                         <!-- Typing indicator -->
-                                        <div x-show="chatLoading" class="flex justify-start">
-                                            <div class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-400">
-                                                <span class="flex items-center gap-1">
-                                                    <span class="w-2 h-2 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:0ms"></span>
-                                                    <span class="w-2 h-2 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:150ms"></span>
-                                                    <span class="w-2 h-2 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:300ms"></span>
+                                        <div x-show="chatLoading" class="flex justify-start animate-fade-up">
+                                            <div class="bg-gray-800/80 border border-gray-700 rounded-2xl px-5 py-3">
+                                                <span class="flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:0ms"></span>
+                                                    <span class="w-1.5 h-1.5 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:150ms"></span>
+                                                    <span class="w-1.5 h-1.5 bg-brand-yellow rounded-full animate-bounce" style="animation-delay:300ms"></span>
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Input bar -->
-                                    <div class="border-t border-gray-800 px-3 py-3 flex items-center gap-2">
-                                        <button @click="toggleVoiceInput()" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition"
-                                                :class="voiceListening ? 'bg-red-500 text-white animate-pulse' : 'glass text-gray-400 hover:text-brand-yellow'">
+                                    <div class="border-t border-gray-800 px-3 py-3 flex items-center gap-2 bg-gray-900/30">
+                                        <button @click="toggleVoiceInput()" class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition text-sm"
+                                                :class="voiceListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700 hover:text-brand-yellow hover:border-brand-yellow/30'">
                                             🎤
                                         </button>
                                         <input type="text" x-model="chatInput" @keydown.enter="sendChatMessage()"
-                                               placeholder="Ask a question..." 
-                                               class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-brand-light placeholder-gray-500 focus:border-brand-yellow focus:outline-none transition">
+                                               placeholder="Type your question..." 
+                                               class="flex-1 bg-gray-800/80 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-brand-light placeholder-gray-600 focus:border-brand-yellow/40 focus:outline-none transition">
                                         <button @click="sendChatMessage()" :disabled="!chatInput.trim() || chatLoading" 
-                                                class="w-10 h-10 bg-brand-yellow rounded-full flex items-center justify-center shrink-0 hover:brightness-110 transition disabled:opacity-40">
-                                            <span class="text-brand-dark font-bold">→</span>
+                                                class="w-9 h-9 bg-brand-yellow rounded-xl flex items-center justify-center shrink-0 hover:brightness-110 transition disabled:opacity-30 text-sm">
+                                            <span class="text-brand-dark font-bold">↑</span>
                                         </button>
                                     </div>
                                 </div>
